@@ -3,7 +3,6 @@ import enum
 from scipy.special import binom
 from itertools import combinations  
 import numpy as np
-from probability import p_local, p_online
 
 
 class QueueMMmFIFOInf:
@@ -63,11 +62,11 @@ class QueueMMmFIFOInfInd:
     def __init__(self, _lambda, _mi):
         self._lambda = _lambda
         self._mi = _mi
-        self.m = _mi.length
+        self.m = len(_mi)
         sum([self.ro(k) for k in range(self.m)]) < self.m
 
     def ro(self, k):
-        assert 0 < k <= self.m
+        assert 0 <= k <= self.m
         return float(self._lambda / self._mi[k])
 
     def p(self, k):
@@ -109,24 +108,36 @@ class RestaurantSystem:
         self.systems = [None] * (len(Systems) + 1)
         self.lambdas = [None] * len(Orders)
         self.p = [None] * len(Orders)
-        self.systemTypes = [SystemTypes.Type4] * (len(Systems) + 1)
+        self.systemTypes = [SystemTypes.Type1] * (len(Systems) + 1)
 
-    def Waiter(self, _lambda, _mi):
-        self.systems[Systems.Waiter] = QueueMMmFIFOInf(_lambda, _mi)
-    def OnlineBuffer(self, _lambda, _mi):
-        self.systems[Systems.OnlineBuffer] = QueueMMinf(_lambda, _mi)
-    def SoupChef(self, _lambda, _mi):
-        self.systems[Systems.ChefSoup] = QueueMMmFIFOInfInd(_lambda, _mi)
-    def MainChef(self, _lambda, _mi):
-        self.systems[Systems.ChefMain] = QueueMMmFIFOInfInd(_lambda, _mi)
-    def DesserChef(self, _lambda, _mi):
-        self.systems[Systems.ChefDesser] = QueueMMmFIFOInfInd(_lambda, _mi)
-    def Barista(self, _lambda, _mi):
-        self.systems[Systems.Barista] = QueueMMmFIFOInfInd(_lambda, _mi)
-    def Delivery(self, _lambda, _mi):
-        self.systems[Systems.Delivery] = QueueMMmFIFOInf(_lambda, _mi)
-    def Cashier(self, _lambda, _mi):
-        self.systems[Systems.Cashier] = QueueMMmFIFOInf(_lambda, _mi)
+    def Waiter(self, _mi, m):
+        l = self.lambdaIR(Systems.Waiter, Orders.Local) + self.lambdaIR(Systems.Waiter, Orders.Online)
+        self.systems[Systems.Waiter] = QueueMMmFIFOInf(l, _mi, m)
+    def Waiter2(self, _mi, m):
+        l = self.lambdaIR(Systems.Waiter2, Orders.Local) + self.lambdaIR(Systems.Waiter2, Orders.Online)
+        self.systems[Systems.Waiter2] = QueueMMmFIFOInf(l, _mi, m)
+    def OnlineBuffer(self, _mi):
+        l = self.lambdaIR(Systems.OnlineBuffer, Orders.Local) + self.lambdaIR(Systems.OnlineBuffer, Orders.Online)
+        self.systemTypes[Systems.OnlineBuffer] = SystemTypes.Type3
+        self.systems[Systems.OnlineBuffer] = QueueMMinf(l, _mi)
+    def SoupChef(self, _mi):
+        l = self.lambdaIR(Systems.ChefSoup, Orders.Local) + self.lambdaIR(Systems.ChefSoup, Orders.Online)
+        self.systems[Systems.ChefSoup] = QueueMMmFIFOInfInd(l, _mi)
+    def MainChef(self, _mi):
+        l = self.lambdaIR(Systems.ChefMain, Orders.Local) + self.lambdaIR(Systems.ChefMain, Orders.Online)
+        self.systems[Systems.ChefMain] = QueueMMmFIFOInfInd(l, _mi)
+    def DesserChef(self, _mi):
+        l = self.lambdaIR(Systems.ChefDesser, Orders.Local) + self.lambdaIR(Systems.ChefDesser, Orders.Online)
+        self.systems[Systems.ChefDesser] = QueueMMmFIFOInfInd(l, _mi)
+    def Barista(self, _mi):
+        l = self.lambdaIR(Systems.Barista, Orders.Local) + self.lambdaIR(Systems.Barista, Orders.Online)
+        self.systems[Systems.Barista] = QueueMMmFIFOInfInd(l, _mi)
+    def Delivery(self, _mi, m):
+        l = self.lambdaIR(Systems.Delivery, Orders.Local) + self.lambdaIR(Systems.Delivery, Orders.Online)
+        self.systems[Systems.Delivery] = QueueMMmFIFOInf(l, _mi, m)
+    def Cashier(self, _mi, m):
+        l = self.lambdaIR(Systems.Cashier, Orders.Local) + self.lambdaIR(Systems.Cashier, Orders.Online)
+        self.systems[Systems.Cashier] = QueueMMmFIFOInf(l, _mi, m)
 
     def Online(self, _lambda, p):
         self.lambdas[Orders.Online] = _lambda
@@ -147,35 +158,35 @@ class RestaurantSystem:
                 any(p is None for p in self.p) or\
                 any(l is None for l in self.lambdas)
 
-    def lambdaR(self, r):
+    def lambdaR(self, order):
         """
         lambda for r-class
         """
-        return sum(self.lambda0IR(i, r) for i in range(len(Systems)))
+        return sum(self.lambda0IR(i, order) for i in range(len(Systems)))
 
-    def lambda0IR(self, i, r):
-        return self.lambdas[r] * np.squeeze(np.asarray(self.p[r][0]))[i]
+    def lambda0IR(self, system, order):
+        return self.lambdas[order] * np.squeeze(np.asarray(self.p[order][0]))[system]
 
-    def lambdaIR(self, i, r):
+    def lambdaIR(self, system, order):
         suma = 0
-        matrix = self.p[r].transpose()[i]
+        matrix = self.p[order].transpose()[system]
         matrix = np.squeeze(np.asarray(matrix))
         for n in range(len(matrix)):
             if (matrix[n] > 0):
-                suma += matrix[n] * self.lambdaIR(n, r)
-        return self.lambda0IR(i, r) + suma
+                suma += matrix[n] * self.lambdaIR(n, order)
+        return self.lambda0IR(system, order) + suma
 
-    def P_I_Ki(self, i, ki):
-        if(self.systemTypes[i] == SystemTypes.Type3):
-            return self.P_I_Ki_Type_3(self, i, ki)
-        if(self.systemTypes[i] == SystemTypes.Type1 and self.systems[i].m > 1):
-            return self.P_I_Ki_Type_1(i, ki)
-        return (1 - self.systems[i].ro(i)) * self.systems[i].ro(i) ** ki
+    def P_I_Ki(self, system, ki):
+        if(self.systemTypes[system] == SystemTypes.Type3):
+            return self.P_I_Ki_Type_3(self, system, ki)
+        if(self.systemTypes[system] == SystemTypes.Type1 and self.systems[system].m > 1):
+            return self.P_I_Ki_Type_1(system, ki)
+        return (1 - self.systems[system].ro(system)) * self.systems[system].ro(system) ** ki
 
-    def P_I_Ki_Type_3(self, i, ki):
-        return math.e**(- self.systems[i].ro(i)) * (self.systems[i].ro(i) ** ki)/(math.factorial(ki))
+    def P_I_Ki_Type_3(self, system, ki):
+        return math.e**(- self.systems[system].ro(system)) * (self.systems[system].ro(system) ** ki)/(math.factorial(ki))
 
-    def P_I_Ki_Type_1(self, i, ki):
+    def P_I_Ki_Type_1(self, system, ki):
         raise NotImplementedError
 
 class Orders(enum.IntEnum):
@@ -215,13 +226,3 @@ print(f'średni czas oczekiwania {queMMn.T()}')
 # średnia liczba zgłoszeń 0.7692307692307693
 # średni czas oczekiwania 0.07692307692307693
 """
-
-rest = RestaurantSystem()
-rest.P(Orders.Local, np.matrix(p_local))
-rest.P(Orders.Online, np.matrix(p_online))
-rest._lambda(Orders.Local, 200)
-rest._lambda(Orders.Online, 200)
-
-print(rest.lambda0IR(2, Orders.Local))
-print(rest.lambdaR(Orders.Local))
-print(rest.lambdaIR(Systems.ChefDesser, Orders.Local))
