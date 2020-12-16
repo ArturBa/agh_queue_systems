@@ -209,20 +209,3 @@ class Systems(enum.IntEnum):
     Waiter2 = 7
     Delivery = 8
     Cashier = 9
-
-
-"""
-queMMn = QueueMMmFIFOInf(10, 13, 2)
-print(f'średnia liczba zgłoszeń {queMMn.K()}')
-print(f'średni czas oczekiwania {queMMn.T()}')
-
-# średnia liczba zgłoszeń 0.9721528471528472
-# średni czas oczekiwania 0.07478098824252671
-
-queMMn = QueueMMinf(10, 13)
-print(f'średnia liczba zgłoszeń {queMMn.K()}')
-print(f'średni czas oczekiwania {queMMn.T()}')
-
-# średnia liczba zgłoszeń 0.7692307692307693
-# średni czas oczekiwania 0.07692307692307693
-"""
