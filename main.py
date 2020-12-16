@@ -160,10 +160,9 @@ class RestaurantSystem:
         suma = 0
         matrix = self.p[r].transpose()[i]
         matrix = np.squeeze(np.asarray(matrix))
-        for n in range(len(Systems)):
-            if(matrix[n] > 0):
-                print(matrix[n])
-                suma += self.lambdaIR(n, r)*matrix[n]
+        for n in range(len(matrix)):
+            if (matrix[n] > 0):
+                suma += matrix[n] * self.lambdaIR(n, r)
         return self.lambda0IR(i, r) + suma
 
     def P_I_Ki(self, i, ki):
