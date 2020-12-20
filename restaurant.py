@@ -193,7 +193,7 @@ class RestaurantSystem:
 
 
     def ro_IR(self, system, order):
-        l = self.lambdaIR(system, order) + self.lambdaIR(system, order)
+        l = self.lambdaIR(system, Orders.Online) + self.lambdaIR(system, Orders.Local)
         return self.systems[system].ro() / l * self.lambdaR(order) 
 
     def K_IR(self, system, order):
@@ -220,15 +220,15 @@ class RestaurantSystem:
 
 
 
-class Orders(enum.IntEnum):
-    Online= 0
-    Local = 1
-
 class SystemTypes(enum.IntEnum):
     Type1 = 1
     Type2 = 2
     Type3 = 3
     Type4 = 4
+
+class Orders(enum.IntEnum):
+    Online= 0
+    Local = 1
 
 class Systems(enum.IntEnum):
     Waiter = 1
