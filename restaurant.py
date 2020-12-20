@@ -10,11 +10,11 @@ class QueueMMmFIFOInf:
     def __init__(self, _lambda, _mi, m):
         self._lambda = _lambda
         self._mi = _mi
+        self.m = m 
         assert self.ro() < m
-        self.m = m
 
     def ro(self):
-        return float(self._lambda / self._mi)
+        return float(self._lambda / (self.m * self._mi))
 
     def p(self, number):
         if number > self.m:
@@ -63,9 +63,12 @@ class QueueMMmFIFOInfInd:
         self._lambda = _lambda
         self._mi = _mi
         self.m = len(_mi)
-        sum([self.ro(k) for k in range(self.m)]) < self.m
+        sum([self.roK(k) for k in range(self.m)]) < self.m
 
-    def ro(self, k):
+    def ro(self):
+        return float(self._lambda / sum(self._mi))
+
+    def roK(self, k):
         assert 0 <= k <= self.m
         return float(self._lambda / self._mi[k])
 
@@ -75,7 +78,6 @@ class QueueMMmFIFOInfInd:
             return self.p0() * calcSK(k, self.m) / (math.factorial(k) * (binom(self.m, k))**(k-self.m))
         return self.p0() * calcSK(k, self.m) / (math.factorial(k) * calcSK(self.m -1, m)**(k-self.m))
 
-    
     def p0(self):
         q = 0
         for i in range(self.m - 1):
@@ -188,6 +190,35 @@ class RestaurantSystem:
 
     def P_I_Ki_Type_1(self, system, ki):
         raise NotImplementedError
+
+
+    def ro_IR(self, system, order):
+        l = self.lambdaIR(system, order) + self.lambdaIR(system, order)
+        return self.systems[system].ro() / l * self.lambdaR(order) 
+
+    def K_IR(self, system, order):
+        if(self.systemTypes[system] == SystemTypes.Type3):
+            return self.K_IS(system, order)
+        return self.K_FIFO(system, order)
+
+    def K_IS(self, system, order):
+        return self.lambdaIR(system, order) / self.systems[system]._mi
+
+    def K_FIFO(self, system, order):
+        system_fifo = self.systems[system]
+        mI = system_fifo.m
+        roI = system_fifo.ro()
+        roIR = self.ro_IR(system, order)
+
+        result = roIR / (1-roI) * (mI*roI)**mI/(math.factorial(mI)*(1-roI))
+        result /= sum([(mI*roI)**k/math.factorial(k) for k in range(mI-1)]) + (mI*roI)**mI/(math.factorial(mI)*(1-roI)) 
+
+        return mI * roIR + result
+
+    def K_I(self, system):
+        return sum([self.K_IR(system, order) for order in Orders])
+
+
 
 class Orders(enum.IntEnum):
     Online= 0

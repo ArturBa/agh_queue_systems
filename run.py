@@ -1,4 +1,4 @@
-from main import *
+from restaurant import *
 from probability import p_local, p_online
 
 
@@ -26,3 +26,5 @@ print(rest.lambda0IR(Systems.Waiter, Orders.Local))
 print(rest.lambda0IR(Systems.Barista, Orders.Local))
 print(rest.lambdaR(Orders.Local))
 print(rest.lambdaIR(Systems.ChefDesser, Orders.Local))
+print(rest.K_IR(Systems.OnlineBuffer, Orders.Online))
+print(rest.K_IR(Systems.Barista, Orders.Local))
