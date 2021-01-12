@@ -19,13 +19,18 @@ def cost_function(input):
     restaurant.Cashier(input['cashier'][0], input['cashier'][1])
 
     # For system -1 since they iteration start on 1 (and we need input on probability matrix as 0)
-    return sum([sum([input['cost'][order][system-1] * restaurant.K_IR(system, order) for order in Orders]) for system in Systems])
+    return sum([sum([input['cost'][order][system-1] * restaurant.K_IR(system, order) for order in Orders]) for system in Systems]) +\
+        sum([restaurant.M_I(system) * input['costFree'][system-1] for system in Systems])
 
 costQueue = [
     # Waiter OnlineBuffer ChefSoup ChefMain ChefDesser Barista Waiter2 Delivery Cashier 
     [ 0,        6,          8,         9,       4,         0,   0,          19,     0 ], # Online
     [ 2,        0,          8,         9,       4,         3,   3,           0,    17 ], # Local
-    ]
+]
+
+costFreeChannel = \
+    [ 2,        0,          8,         9,       4,         3,   3,          17,    17 ]
+    # Waiter OnlineBuffer ChefSoup ChefMain ChefDesser Barista Waiter2 Delivery Cashier 
 
 input = {
     'p': [p_online, p_local],
@@ -39,7 +44,8 @@ input = {
     'waiter2': [210, 2],
     'delivery': [55, 4],
     'cashier': [120, 2],
-    'cost': costQueue
+    'cost': costQueue,
+    'costFree': costFreeChannel
     }
 
 

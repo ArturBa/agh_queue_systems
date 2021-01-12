@@ -219,6 +219,18 @@ class RestaurantSystem:
         return sum([self.K_IR(system, order) for order in Orders])
 
 
+    def M_I(self, system):
+        M = 0 
+        if(self.systemTypes[system] == SystemTypes.Type3):
+            return 0
+        else:
+            M += self.systems[system].m
+        
+        M -= self.K_I(system)
+        if M > 0: 
+            return M        
+        return 0
+
 
 class SystemTypes(enum.IntEnum):
     Type1 = 1
