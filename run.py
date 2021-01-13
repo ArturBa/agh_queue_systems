@@ -52,5 +52,12 @@ costFreeChannel = \
 
 
 varbound = np.array([[2, 10]]*4)
-model = ga(function=cost_function, dimension=4, variable_type='int', variable_boundaries=varbound)
+model = ga(function=cost_function, dimension=4, variable_type='int', variable_boundaries=varbound,
+           algorithm_parameters={'max_num_iteration': 100,
+                                       'population_size': 10,
+                                       'mutation_probability': 0.1,
+                                       'elit_ratio': 0.01,
+                                       'crossover_probability': 0.5,
+                                       'parents_portion': 0.3,
+                                       'max_iteration_without_improv': None})
 model.run()
