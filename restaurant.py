@@ -76,7 +76,7 @@ class QueueMMmFIFOInfInd:
         assert k >= 0
         if k < self.m:
             return self.p0() * calcSK(k, self.m) / (math.factorial(k) * (binom(self.m, k))**(k-self.m))
-        return self.p0() * calcSK(k, self.m) / (math.factorial(k) * calcSK(self.m -1, m)**(k-self.m))
+        return self.p0() * calcSK(k, self.m) / (math.factorial(k) * calcSK(self.m -1, self.m)**(k-self.m))
 
     def p0(self):
         q = 0
@@ -206,7 +206,7 @@ class RestaurantSystem:
 
     def K_FIFO(self, system, order):
         system_fifo = self.systems[system]
-        mI = system_fifo.m
+        mI = int(system_fifo.m)
         roI = system_fifo.ro()
         roIR = self.ro_IR(system, order)
 
