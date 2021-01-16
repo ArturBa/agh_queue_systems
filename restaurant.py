@@ -90,8 +90,7 @@ class QueueMMmFIFOInfInd:
         return self.p0() * sk_1_m / (math.factorial(self.m) * (sk_1_m/sk_m_m - 1)**2) + self.m * sk_m_m/sk_1_m
 
     def T(self):
-        # How to calculate this stuff? Mean of the mi?
-        self.K * self._mi[0]
+        self.K * math.mean(self._mi)
         
 def prod(val) :  
     res = 1 
@@ -112,6 +111,7 @@ class RestaurantSystem:
         self.p = [None] * len(Orders)
         self.systemTypes = [SystemTypes.Type1] * (len(Systems) + 1)
 
+    #  There is an initialization for each of queue system in restaurant
     def Waiter(self, _mi, m):
         l = self.lambdaIR(Systems.Waiter, Orders.Local) + self.lambdaIR(Systems.Waiter, Orders.Online)
         self.systems[Systems.Waiter] = QueueMMmFIFOInf(l, _mi, m)
@@ -141,6 +141,7 @@ class RestaurantSystem:
         l = self.lambdaIR(Systems.Cashier, Orders.Local) + self.lambdaIR(Systems.Cashier, Orders.Online)
         self.systems[Systems.Cashier] = QueueMMmFIFOInf(l, _mi, m)
 
+    # Init of orders marchrute by start lambda and propability table
     def Online(self, _lambda, p):
         self.lambdas[Orders.Online] = _lambda
         self.p[Orders.Online] = p
@@ -148,13 +149,14 @@ class RestaurantSystem:
         self.lambdas[Orders.Local] = _lambda
         self.p[Orders.Local] = p
 
+    # Init of orders marchute separating probability and init lambda 
     def P(self, r, p):
         self.p[r] = p
-
     def _lambda(self, r, l):
         self.lambdas[r] = l
     
 
+    # Check if all systems are correctly initialized
     def Check(self):
         return  any(s is None for s in self.systems) or\
                 any(p is None for p in self.p) or\
@@ -167,18 +169,45 @@ class RestaurantSystem:
         return sum(self.lambda0IR(i, order) for i in range(len(Systems)))
 
     def lambda0IR(self, system, order):
+        """Init lambda of system and order
+
+        Args:
+            system ([SystemTypes]): selected system
+            order ([Order]): selected order
+
+        Returns:
+            [float]: init lambda for system and order
+        """
         return self.lambdas[order] * np.squeeze(np.asarray(self.p[order][0]))[system]
 
     def lambdaIR(self, system, order):
-        suma = 0
+        """ Get lambda of selected system for selected order
+
+        Args:
+            system ([SystemTypes]): selected system
+            order ([Order]): selected order
+
+        Returns:
+            [float]: init lambda for system and order
+        """
+        total = 0
         matrix = self.p[order].transpose()[system]
         matrix = np.squeeze(np.asarray(matrix))
         for n in range(len(matrix)):
             if (matrix[n] > 0):
-                suma += matrix[n] * self.lambdaIR(n, order)
-        return self.lambda0IR(system, order) + suma
+                total += matrix[n] * self.lambdaIR(n, order)
+        return self.lambda0IR(system, order) + total
 
     def P_I_Ki(self, system, ki):
+        """ Get probability of system for orders in queue
+
+        Args:
+            system ([SystemTypes]): selected system
+            ki ([int]): orders in queue
+
+        Returns:
+            [float]: propability
+        """
         if(self.systemTypes[system] == SystemTypes.Type3):
             return self.P_I_Ki_Type_3(self, system, ki)
         if(self.systemTypes[system] == SystemTypes.Type1 and self.systems[system].m > 1):
@@ -186,25 +215,79 @@ class RestaurantSystem:
         return (1 - self.systems[system].ro(system)) * self.systems[system].ro(system) ** ki
 
     def P_I_Ki_Type_3(self, system, ki):
+        """ Get probability for system type 3
+
+        Args:
+            system ([SystemTypes]): selected system
+            ki ([int]): orders in queue
+
+        Returns:
+            [float]: propability
+        """
         return math.e**(- self.systems[system].ro(system)) * (self.systems[system].ro(system) ** ki)/(math.factorial(ki))
 
     def P_I_Ki_Type_1(self, system, ki):
+        """ Get probability for system type 1
+
+        Args:
+            system ([SystemTypes]): selected system
+            ki ([int]): orders in queue
+
+        Returns:
+            [float]: propability
+        """
         raise NotImplementedError
 
 
     def ro_IR(self, system, order):
+        """ Get reciprocal of system and order
+
+        Args:
+            system ([SystemTypes]): selected system
+            order ([Order]): selected order
+
+        Returns:
+            [float]: reciprocal 
+        """
         l = self.lambdaIR(system, Orders.Online) + self.lambdaIR(system, Orders.Local)
         return self.systems[system].ro() / l * self.lambdaR(order) 
 
     def K_IR(self, system, order):
+        """ Get queue size in system of order
+
+        Args:
+            system ([SystemTypes]): selected system
+            order ([Order]): selected order
+
+        Returns:
+            [float]: queue size
+        """
         if(self.systemTypes[system] == SystemTypes.Type3):
             return self.K_IS(system, order)
         return self.K_FIFO(system, order)
 
     def K_IS(self, system, order):
+        """ Get queue size in system of type 3 for  order
+
+        Args:
+            system ([SystemTypes]): selected system
+            order ([Order]): selected order
+
+        Returns:
+            [float]: queue size
+        """
         return self.lambdaIR(system, order) / self.systems[system]._mi
 
     def K_FIFO(self, system, order):
+        """ Get queue size in system of not type 3 for order
+
+        Args:
+            system ([SystemTypes]): selected system
+            order ([Order]): selected order
+
+        Returns:
+            [float]: queue size
+        """
         system_fifo = self.systems[system]
         mI = int(system_fifo.m)
         roI = system_fifo.ro()
@@ -216,10 +299,26 @@ class RestaurantSystem:
         return mI * roIR + result
 
     def K_I(self, system):
+        """ Get queue size for a system for all orders
+
+        Args:
+            system ([SystemTypes]): selected system
+
+        Returns:
+            [float]: queue size
+        """
         return sum([self.K_IR(system, order) for order in Orders])
 
 
     def M_I(self, system):
+        """ Get service channels for system
+
+        Args:
+            system ([SystemTypes]): selected system
+
+        Returns:
+            [float]: service channels
+        """
         M = 0 
         if(self.systemTypes[system] == SystemTypes.Type3):
             return 0

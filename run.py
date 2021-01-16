@@ -1,25 +1,11 @@
 from restaurant import *
 from probability import p_local, p_online
-import numpy as np
+
 from geneticalgorithm2 import geneticalgorithm2 as ga
+import numpy as np
 
 
-def cost_function(X):
-    input = {
-        'p': [p_online, p_local],
-        'lambda': [150, 150],
-        'waiter': [100, X[0]],
-        'onlineBuffer': 300,
-        'soupChef': [250, 210],
-        'mainChef': [250, 210],
-        'desserChef': [250, 210],
-        'barista': [350],
-        'waiter2': [210, X[1]],
-        'delivery': [55, X[2]],
-        'cashier': [120, X[3]],
-        'cost': costQueue,
-        'costFree': costFreeChannel
-    }
+def cost_function(input):
     restaurant = RestaurantSystem()
     restaurant.P(Orders.Online, np.matrix(input['p'][0]))
     restaurant.P(Orders.Local, np.matrix(input['p'][1]))
@@ -50,9 +36,26 @@ costFreeChannel = \
     [ 2,        0,          8,         9,       4,         3,   3,          17,    17 ]
     # Waiter OnlineBuffer ChefSoup ChefMain ChefDesser Barista Waiter2 Delivery Cashier 
 
+def generic_cost_function(X):
+    input = {
+        'p': [p_online, p_local],
+        'lambda': [150, 150],
+        'waiter': [100, X[0]],
+        'onlineBuffer': 300,
+        'soupChef': [250, 210],
+        'mainChef': [250, 210],
+        'desserChef': [250, 210],
+        'barista': [350],
+        'waiter2': [210, X[1]],
+        'delivery': [55, X[2]],
+        'cashier': [120, X[3]],
+        'cost': costQueue,
+        'costFree': costFreeChannel
+    }
+    return cost_function(input)
 
 varbound = np.array([[2, 10]]*4)
-model = ga(function=cost_function, dimension=4, variable_type='int', variable_boundaries=varbound,
+model = ga(function=generic_cost_function, dimension=4, variable_type='int', variable_boundaries=varbound,
            algorithm_parameters={'max_num_iteration': 100,
                                        'population_size': 10,
                                        'mutation_probability': 0.1,
