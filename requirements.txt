@@ -1,0 +1,6 @@
+geneticalgorithm2==5.6.0
+matplotlib==3.3.3
+pandas==1.2.0
+pathspec==0.8.1
+scipy==1.5.4
+seaborn==0.11.1
