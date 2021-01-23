@@ -11,7 +11,7 @@ class QueueMMmFIFOInf:
         self._lambda = _lambda
         self._mi = _mi
         self.m = m 
-        assert self.ro() < m
+        #assert self.ro() < 1
 
     def ro(self):
         return float(self._lambda / (self.m * self._mi))
@@ -82,7 +82,7 @@ class QueueMMmFIFOInfInd:
         q = 0
         for i in range(self.m - 1):
             q += calcSK(i, self.m) / (math.factorial(i) * binom(self.m, i)) 
-        return (1 + q + (calcSK(self.m, self.m) * calcSK(self.m-1, self.m)) / (math.factorial(math.m) * (calcSK(self.m-1, self.m) * calcSK(self.m, self.m))))
+        return (1 + q + (calcSK(self.m, self.m) * calcSK(self.m-1, self.m)) / (math.factorial(self.m) * (calcSK(self.m-1, self.m) * calcSK(self.m, self.m))))
 
     def K(self):
         sk_1_m = calcSK(self.m-1, self.m)
@@ -145,7 +145,7 @@ class RestaurantSystem:
     def Online(self, _lambda, p):
         self.lambdas[Orders.Online] = _lambda
         self.p[Orders.Online] = p
-    def Local(self, _lambda):
+    def Local(self, _lambda, p):
         self.lambdas[Orders.Local] = _lambda
         self.p[Orders.Local] = p
 
@@ -292,10 +292,10 @@ class RestaurantSystem:
         mI = int(system_fifo.m)
         roI = system_fifo.ro()
         roIR = self.ro_IR(system, order)
-
+        if roI > 1:
+            return 5000
         result = roIR / (1-roI) * (mI*roI)**mI/(math.factorial(mI)*(1-roI))
-        result /= sum([(mI*roI)**k/math.factorial(k) for k in range(mI-1)]) + (mI*roI)**mI/(math.factorial(mI)*(1-roI)) 
-
+        result /= sum([(mI*roI)**k/math.factorial(k) for k in range(mI-1)]) + (mI*roI)**mI/(math.factorial(mI)*(1-roI))
         return mI * roIR + result
 
     def K_I(self, system):

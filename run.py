@@ -52,11 +52,59 @@ def generic_cost_function(X):
         'cost': costQueue,
         'costFree': costFreeChannel
     }
+
     return cost_function(input)
 
-varbound = np.array([[2, 10]]*4)
+def test_algorithm(n):
+    # run optimization n times and calculate min, max and mean of iterations needed to get optimal result
+    iterations = []
+    for i in range(100):
+        model.run(no_plot=True, stop_when_reached=138.67859434357507)
+        iterations.append(len(model.report))
+    print("\n")
+    print(min(iterations))
+    print(max(iterations))
+    print(sum(iterations) / len(iterations))
+
+def system_info(X):
+    # print K_I for every system
+    input = {
+        'p': [p_online, p_local],
+        'lambda': [150, 150],
+        'waiter': [70, X[0]],
+        'onlineBuffer': 300,
+        'soupChef': [250, 210],
+        'mainChef': [250, 210],
+        'desserChef': [250, 210],
+        'barista': [350],
+        'waiter2': [210, X[1]],
+        'delivery': [55, X[2]],
+        'cashier': [100, X[3]]}
+    restaurant = RestaurantSystem()
+    restaurant.P(Orders.Online, np.matrix(input['p'][0]))
+    restaurant.P(Orders.Local, np.matrix(input['p'][1]))
+    restaurant._lambda(Orders.Local, input['lambda'][0])
+    restaurant._lambda(Orders.Online, input['lambda'][0])
+
+    restaurant.Waiter(input['waiter'][0], input['waiter'][1])
+    restaurant.OnlineBuffer(input['onlineBuffer'])
+    restaurant.SoupChef(input['soupChef'])
+    restaurant.MainChef(input['mainChef'])
+    restaurant.DesserChef(input['desserChef'])
+    restaurant.Barista(input['barista'])
+    restaurant.Waiter2(input['waiter2'][0], input['waiter2'][1])
+    restaurant.Delivery(input['delivery'][0], input['delivery'][1])
+    restaurant.Cashier(input['cashier'][0], input['cashier'][1])
+    print("\n")
+    for system in Systems:
+        print(f'Queue in system {system.name}: {restaurant.K_I(system)}')
+        #print(f'Queue in {restaurant.ro_I(system)}')
+
+
+system_info([1, 1, 3, 2])
+varbound = np.array([[1, 10], [1, 10], [1, 10], [1, 10]])
 model = ga(function=generic_cost_function, dimension=4, variable_type='int', variable_boundaries=varbound,
-           algorithm_parameters={'max_num_iteration': 100,
+           algorithm_parameters={'max_num_iteration': 500,
                                        'population_size': 10,
                                        'mutation_probability': 0.1,
                                        'elit_ratio': 0.01,
@@ -64,3 +112,5 @@ model = ga(function=generic_cost_function, dimension=4, variable_type='int', var
                                        'parents_portion': 0.3,
                                        'max_iteration_without_improv': None})
 model.run()
+system_info(model.output_dict['variable'])
+#test_algorithm(100)
