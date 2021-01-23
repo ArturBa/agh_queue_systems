@@ -97,14 +97,13 @@ def system_info(X):
     restaurant.Cashier(input['cashier'][0], input['cashier'][1])
     print("\n")
     for system in Systems:
-        print(f'Queue in system {system.name}: {restaurant.K_I(system)}')
-        #print(f'Queue in {restaurant.ro_I(system)}')
+        print(f'Queue in system {system.name}: {restaurant.K_I(system)}')        
 
 
 system_info([1, 1, 3, 2])
 varbound = np.array([[1, 10], [1, 10], [1, 10], [1, 10]])
 model = ga(function=generic_cost_function, dimension=4, variable_type='int', variable_boundaries=varbound,
-           algorithm_parameters={'max_num_iteration': 500,
+           algorithm_parameters={'max_num_iteration': 200,
                                        'population_size': 10,
                                        'mutation_probability': 0.1,
                                        'elit_ratio': 0.01,
